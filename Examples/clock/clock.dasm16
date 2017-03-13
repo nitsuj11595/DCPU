@@ -1,8 +1,8 @@
-;;; hello.dasm16
+;;; clock.dasm16
 ;;; Copyright 26XX (c) nitsuj11595
 ;;; 
-;;; Basic hello world program
-;;; Requires either a LEM or Pixie monitor
+;;; A quick test for the generic clock
+;;; Required a Generic Clock, and a LEM or PIXIE Monitor
 ;;; 
 ;;; This program is free software: you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -17,24 +17,11 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Main code
-:MAIN
-	JSR	GetMonitor
+#include "main.dasm16"
 
-	SET	A, 0
-	SET	B, VIDEORAM_START
-	HWI	[MONITOR] ;Map videoram to end of program
+#include "hardware_defs.dasm16"
+#include "hardware_setup.dasm16"
 
-	SET	A, HELLO
-	SET	B, VIDEORAM_START
-	JSR	String_copy ;Copy a string
+#include "clock_tick.dasm16"
 	
-:HALT
-	SET	PC, HALT ;Loop Forever
-
-;;; Variables
-:HELLO
-	DAT	"Hello World!" 0x0000
-
-:MONITOR
-	DAT	0xFFFF, 0xFFFF, 0xFFFF ;Default Monitor (#, id A, id B)
+:VIDEORAM_START

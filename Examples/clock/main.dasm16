@@ -1,8 +1,8 @@
-;;; hello.dasm16
+;;; main.dasm16
 ;;; Copyright 26XX (c) nitsuj11595
 ;;; 
-;;; Basic hello world program
-;;; Requires either a LEM or Pixie monitor
+;;; This file is part of clock
+;;; Requires a Generic Clock and either a LEM or Pixie monitor 
 ;;; 
 ;;; This program is free software: you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -17,24 +17,38 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Main code
-:MAIN
-	JSR	GetMonitor
+;;; Main Code
+:MAIN	
+	JSR	HardwareSetup
 
+	IAQ	0
+	IAS	CLOCK_tick	;Setup interupt address
+	
 	SET	A, 0
 	SET	B, VIDEORAM_START
-	HWI	[MONITOR] ;Map videoram to end of program
+	HWI	[MONITOR]	;map videoram to end of program
 
-	SET	A, HELLO
-	SET	B, VIDEORAM_START
-	JSR	String_copy ;Copy a string
+	SET	A, 0x0000
+	SET	B, 60
+	HWI	[CLOCK]		;Set tick speed to once per second
+
+	SET	A, 0x0012
+	SET	B, 1970
+	SET	C, 0x0101
+	SET	X, 0x0000
+	SET	Y, 0
+	SET	Z, 0
+	HWI	[CLOCK]		;Initialize the time
 	
-:HALT
-	SET	PC, HALT ;Loop Forever
-
+	SET	A, 0x0002
+	SET	B, [CLOCK]
+	HWI	[CLOCK]		;Enable interupts
+	
+:LOOP	
+	SET PC, LOOP		;Loop foerver
+	
 ;;; Variables
-:HELLO
-	DAT	"Hello World!" 0x0000
-
 :MONITOR
 	DAT	0xFFFF, 0xFFFF, 0xFFFF ;Default Monitor (#, id A, id B)
+:CLOCK
+	DAT	0xFFFF, 0xFFFF, 0xFFFF ;Default Clock (#, id A, id B)
