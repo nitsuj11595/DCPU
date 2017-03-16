@@ -1,0 +1,73 @@
+;;; hardware_setup.dasm16
+;;; Copyright 26XX (c) nitsuj11595
+;;; 
+;;; This file is part of keyboard
+;;; Requires a Generic Keyboard and either a LEM or Pixie monitor 
+;;; 
+;;; This program is free software: you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation, either version 3 of the License, or
+;;; (at your option) any later version.
+;;; 
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;; 
+;;; You should have received a copy of the GNU General Public License
+;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+:HardwareSetup
+;;; Query hardware and initalize variables
+;;; Stores # and id at MONITOR and at 
+;;; Clobbered Registers: A, B, C, I, X, Y
+	HWN	I ;Set I to # of last connected device +1
+	
+	:GetMonitor_loop
+	SUB	I, 1 ;Pre Decrement
+	IFE	I, 0xFFFF ;Exit when I is -1
+	SET	PC, POP
+	
+	HWQ	I
+	;; Add LEM
+	IFE	A, [MONITOR_LEM+0]
+	IFE	B, [MONITOR_LEM+1]
+	JSR	GetMonitor_LEM
+	;; Add PIXIE
+	IFE	A, [MONITOR_PIXIE+0]
+	IFE	B, [MONITOR_PIXIE+1]
+	JSR	GetMonitor_PIXIE
+	;; Add Generic Clock
+	IFE	A, [CLOCK_GENERIC+0]
+	IFE	B, [CLOCK_GENERIC+1]
+	JSR	GetClock_Generic
+	;; Add Keyboard
+	IFE	A, [KEYBOARD_GENERIC+0]
+	IFE	B, [KEYBOARD_GENERIC+1]
+	JSR	GetKeyboard_Generic
+
+	SET	PC, GetMonitor_loop
+
+:GetMonitor_LEM
+	SET	[MONITOR], I	
+	SET	[MONITOR+1], A
+	SET	[MONITOR+2], B
+	SET	PC, POP
+	
+:GetMonitor_PIXIE
+	SET	[MONITOR], I
+	SET	[MONITOR+1], A
+	SET	[MONITOR+2], B
+	SET	PC, POP 
+
+:GetClock_Generic
+	SET	[CLOCK], I	
+	SET	[CLOCK+1], A
+	SET	[CLOCK+2], B
+	SET	PC, POP
+
+:GetKeyboard_Generic
+	SET	[KEYBOARD], I	
+	SET	[KEYBOARD+1], A
+	SET	[KEYBOARD+2], B
+	SET	PC, POP

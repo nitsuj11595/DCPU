@@ -1,0 +1,100 @@
+;;; main.dasm16
+;;; Copyright 26XX (c) nitsuj11595
+;;; 
+;;; This file is part of keyboard
+;;; Requires a Generic Keyboard and either a LEM or Pixie monitor 
+;;; 
+;;; This program is free software: you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation, either version 3 of the License, or
+;;; (at your option) any later version.
+;;; 
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;; 
+;;; You should have received a copy of the GNU General Public License
+;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	
+;;; Main code
+:MAIN
+	JSR	HardwareSetup
+
+	SET	A, 0
+	SET	B, VIDEORAM_START
+	HWI	[MONITOR]	;map videoram to end of program
+
+	SET	A, 3
+	SET	B, 0x0008
+	HWI	[MONITOR]	;Border 
+
+	IAQ	0
+	IAS	KEYBOARD_INTERRUPT
+	
+	SET	A, 0x0003
+	SET	B, KEYBOARD_INTERRUPT
+	HWI	[KEYBOARD]	;setup keyboard interrupt
+
+	SET	A, 0x0004
+	SET	B, 0
+	HWI	[KEYBOARD]	;set keyboard mode
+
+	;; Initialize cursor
+	SET	[MONITOR_cursor], VIDEORAM_START
+	SET	A, [MONITOR_cursor]
+	AND	[A], 0x00FF
+	BOR	[A], 0xF000
+
+:LOOP	
+	SET	PC, LOOP
+
+:KEYBOARD_INTERRUPT
+	SET	A, 1
+	HWI	[KEYBOARD] ;Store typed character in C
+
+	SET	A, [MONITOR_cursor]
+	
+	IFE	C, 0x0010
+	SET	PC, DELETE
+	
+	;; Type a character
+	SET	[A], C
+	AND	[A], 0x00FF
+	BOR	[A], 0xF000
+	;; Move cursor
+	ADD	A, 1
+	
+	AND	[A], 0x00FF
+	BOR	[A], 0xF000
+	
+	SET	[MONITOR_cursor], A
+	
+	RFI	0
+
+:DELETE
+;;; Deletes a character at A
+	
+	;; Return if at beginning
+	IFE	A, VIDEORAM_START
+	RFI	0
+	
+	AND	[A], 0x00FF
+	BOR	[A], 0x0F00
+	
+	SUB	A, 1 ;Decrement cursor
+	SET	[A], 0x0000
+	BOR	[A], 0xF000
+	
+	SET	[MONITOR_cursor], A
+	RFI	0
+
+;;; Variables
+:MONITOR
+	DAT	0xFFFF, 0xFFFF, 0xFFFF ;Default Monitor (#, id A, id B)
+:KEYBOARD
+	DAT	0xFFFF, 0xFFFF, 0xFFFF ;Default Keyboard (#, id A, id B)
+:CLOCK
+	DAT	0xFFFF, 0xFFFF, 0xFFFF ;Default Clock (#, id A, id B)
+:MONITOR_cursor
+	DAT	VIDEORAM_START
